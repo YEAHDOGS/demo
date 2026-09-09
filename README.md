@@ -4,8 +4,12 @@
 Ecosystem ships gets showcased, demoed, and linked. If someone asks "so what
 does DOGS actually build?", this repo's answer is the site it deploys.
 
-> Status: **skeleton / planning phase.** No site scaffolding yet — the shape of
-> the thing is documented in [`docs/`](./docs) before any code lands.
+> Status: **Phase 1 build exists but its source is not in git.** A Svelte 5 +
+> Vite landing page was built (project grid: icecream, phoenix, castle, wax,
+> divorce, chains, bakery, remote, dashboard, news; OG tags; 404 page) and the
+> build output survives on disk in `dist/`, but the source and `package.json`
+> were never committed — `dist/` cannot currently be rebuilt from the repo.
+> See [`docs/roadmap.md`](./docs/roadmap.md) Phase 1 for the recovery plan.
 
 ## Purpose
 
