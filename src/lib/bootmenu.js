@@ -270,9 +270,9 @@ export function buildWipePlan(diskId) {
  * Plain-text rehearsal transcript — copy/paste friendly, fixture-only, and
  * headed by an unmistakable SIMULATION banner so it can never be mistaken
  * for a record of a real wipe.
- * @param {{ disk: (typeof DISKS)[number], plan: ReturnType<typeof buildWipePlan>, isoDate?: string }}
+ * @param {{ disk: (typeof DISKS)[number], plan: ReturnType<typeof buildWipePlan>, isoDate?: string, gates?: ReturnType<typeof nukeGates> }}
  */
-export function buildRehearsalTranscript({ disk, plan, isoDate }) {
+export function buildRehearsalTranscript({ disk, plan, isoDate, gates }) {
   const lines = [
     '*** SIMULATION — PHOENIX NUKE REHEARSAL TRANSCRIPT ***',
     'Dry run only. No disk was touched. Every value below is a fixture;',
@@ -280,13 +280,22 @@ export function buildRehearsalTranscript({ disk, plan, isoDate }) {
     `Rehearsed at: ${isoDate ?? new Date().toISOString()}`,
     `Target (fixture): ${disk.label} · ${disk.model} · ${disk.serial} · ${formatSize(disk.sizeGb)}`,
     '',
+  ];
+  if (gates) {
+    lines.push(
+      'Safety interlock gates (state that armed this rehearsal):',
+      ...gates.map((g) => `  ${g.pass ? 'PASS' : 'FAIL'} — ${g.label}`),
+      '',
+    );
+  }
+  lines.push(
     'Rehearsal steps:',
     ...plan.map(
       (s, i) => `  ${i + 1}. [SIMULATED] ${s.label} — ${s.detail}`,
     ),
     '',
     'Result: rehearsal complete. No hardware was accessed.',
-  ];
+  );
   return lines.join('\n');
 }
 

@@ -205,6 +205,50 @@ describe('nuke rehearsal model', () => {
     expect(typeof transcript).toBe('string');
   });
 
+  it('transcript records the safety-interlock gates that armed the rehearsal', () => {
+    const disk = diskById('disk-0');
+    const plan = buildWipePlan('disk-0');
+    const gates = nukeGates('disk-0', confirmationPhrase(disk));
+    expect(gates.every((g) => g.pass)).toBe(true);
+    const transcript = buildRehearsalTranscript({
+      disk,
+      plan,
+      isoDate: '2026-09-09T10:00:00.000Z',
+      gates,
+    });
+    expect(transcript).toContain('Safety interlock gates');
+    for (const gate of gates) {
+      expect(transcript).toContain(`PASS — ${gate.label}`);
+    }
+    // Gates render before the steps: the audit trail is gates-then-steps.
+    expect(transcript.indexOf('Safety interlock gates')).toBeLessThan(
+      transcript.indexOf('Rehearsal steps:'),
+    );
+  });
+
+  it('transcript without gates omits the interlock section (back-compat)', () => {
+    const disk = diskById('disk-0');
+    const transcript = buildRehearsalTranscript({
+      disk,
+      plan: buildWipePlan('disk-0'),
+      isoDate: '2026-09-09T10:00:00.000Z',
+    });
+    expect(transcript).not.toContain('Safety interlock gates');
+    expect(transcript).toContain('*** SIMULATION');
+    expect(transcript).toContain('Rehearsal steps:');
+  });
+
+  it('transcript marks failing gates FAIL', () => {
+    const disk = diskById('disk-0');
+    const transcript = buildRehearsalTranscript({
+      disk,
+      plan: buildWipePlan('disk-0'),
+      isoDate: '2026-09-09T10:00:00.000Z',
+      gates: nukeGates('disk-0', 'nope'),
+    });
+    expect(transcript).toContain('FAIL —');
+  });
+
   it('rehearsalAbortState resets to a clean, aborted state', () => {
     const state = rehearsalAbortState();
     expect(state).toEqual({
