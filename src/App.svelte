@@ -32,7 +32,7 @@
     <div class="mx-auto flex max-w-6xl items-center justify-between px-5 py-3 sm:px-8">
       <a href="#/" class="flex items-center gap-2.5">
         <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-400 text-sm font-extrabold text-zinc-950">D</span>
-        <span class="text-sm font-bold tracking-[0.2em] text-zinc-100">DOGS</span>
+        <span class="text-sm font-bold tracking-[0.2em] text-zinc-100 max-[400px]:hidden">DOGS</span>
       </a>
       <nav class="flex items-center gap-1" aria-label="Main">
         {#each LINKS as link}

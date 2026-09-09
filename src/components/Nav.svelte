@@ -10,7 +10,7 @@
 
 <a
   {href}
-  class="rounded-full px-4 py-2 text-sm font-medium transition-colors {active
+  class="rounded-full px-2.5 py-2 text-[13px] font-medium transition-colors sm:px-4 sm:text-sm {active
     ? 'bg-zinc-100 text-zinc-950'
     : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/60'}"
   aria-current={active ? 'page' : undefined}
