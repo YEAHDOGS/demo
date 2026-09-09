@@ -28,3 +28,7 @@ front page.
 | Date       | Decision | By    |
 |------------|----------|-------|
 | 2026-09-09 | docs phase started | Jack |
+| 2026-09-09 | OPEN: Phase 1 build exists on disk (`dist/`, uncommitted) but its source
+  was never committed and isn't on the machine — needs Brandon's call:
+  locate/rebuild source, or discard the build and re-scaffold from the
+  `@dogs/svelte-template` | Jack |
