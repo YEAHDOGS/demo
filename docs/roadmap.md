@@ -8,9 +8,9 @@ Phased so each phase leaves the repo in a shippable state.
 - [x] `docs/content-plan.md` — case-study format + initial project list
 - [x] `docs/design-direction.md` — visual principles
 - [x] `docs/decisions.md` — open decisions logged
-- [ ] Decide: rename repo (`demo` → `portfolio`?) or keep
-- [ ] Decide: framework — Next.js (`.gitignore` suggests it) vs SvelteKit (org stack)
-- [ ] Decide: deployment target (Cloudflare Pages, matching the ecosystem?)
+- [x] Decide: keep repo name `demo` (see decisions.md — name is the Pages URL)
+- [x] Decide: framework — Svelte 5 + Vite SPA, per org template (see decisions.md)
+- [x] Decide: deployment target — GitHub Pages project site for staging (see decisions.md)
 
 ## Phase 1 — Skeleton site
 - [ ] Scaffold the chosen framework, deploy a placeholder to the target
