@@ -3,13 +3,15 @@
     DISKS,
     MENU_ITEMS,
     REINSTALL_FIELDS,
+    buildRehearsalTranscript,
+    buildWipePlan,
     confirmationPhrase,
+    diskById,
     formatSize,
-    nextWipePass,
     nukeGates,
     nukeReady,
+    rehearsalAbortState,
     reinstallReady,
-    wipeDone,
   } from '../lib/bootmenu.js';
 
   // Which boot action is open (null = menu grid).
@@ -17,8 +19,9 @@
   // Nuke interlock state.
   let nukeDisk = $state(null);
   let nukeTyped = $state('');
-  let wiping = $state(false);
-  let wipePassesDone = $state(0);
+  // Nuke rehearsal state: null | { disk, plan, stepIndex, finished, transcript }.
+  let rehearsal = $state(null);
+  let copiedFlag = $state(false);
   // Backup state.
   let backupSource = $state(null);
   let backupTarget = $state(null);
@@ -35,8 +38,8 @@
     // Reset per-action state on every entry — nothing carries over.
     nukeDisk = null;
     nukeTyped = '';
-    wiping = false;
-    wipePassesDone = 0;
+    rehearsal = null;
+    copiedFlag = false;
     backupSource = null;
     backupTarget = null;
     backupDoneFlag = false;
@@ -46,20 +49,68 @@
 
   function goBack() {
     open = null;
+    rehearsal = null;
+    copiedFlag = false;
   }
 
-  function beginWipe() {
-    if (!ready || wiping) return;
-    wiping = true;
-    wipePassesDone = 0;
-    advancePass();
+  function startRehearsal() {
+    if (!ready || rehearsal) return;
+    const disk = diskById(nukeDisk ?? '');
+    if (!disk) return;
+    rehearsal = {
+      disk,
+      plan: buildWipePlan(disk.id),
+      stepIndex: 0,
+      finished: false,
+      transcript: '',
+    };
+    copiedFlag = false;
   }
 
-  function advancePass() {
-    const { pass, completedCount } = nextWipePass(wipePassesDone);
-    if (!pass) return;
-    wipePassesDone = completedCount;
-    setTimeout(advancePass, 700);
+  function advanceRehearsalStep() {
+    if (!rehearsal || rehearsal.finished) return;
+    const next = rehearsal.stepIndex + 1;
+    if (next >= rehearsal.plan.length) {
+      rehearsal = {
+        ...rehearsal,
+        stepIndex: next,
+        finished: true,
+        transcript: buildRehearsalTranscript({
+          disk: rehearsal.disk,
+          plan: rehearsal.plan,
+        }),
+      };
+    } else {
+      rehearsal = { ...rehearsal, stepIndex: next };
+    }
+  }
+
+  function abortRehearsal() {
+    // The abort contract is pinned in rehearsalAbortState() (unit-tested:
+    // step 0, unfinished, empty transcript). Aborting returns cleanly to
+    // the boot menu with nothing carried over.
+    rehearsalAbortState();
+    goBack();
+  }
+
+  async function copyTranscript() {
+    if (!rehearsal?.transcript) return;
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(rehearsal.transcript);
+      } else {
+        const ta = document.createElement('textarea');
+        ta.value = rehearsal.transcript;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      }
+      copiedFlag = true;
+      setTimeout(() => (copiedFlag = false), 2000);
+    } catch {
+      copiedFlag = false;
+    }
   }
 
   function toggleReinstall(id, on) {
@@ -231,29 +282,105 @@
           {/each}
         </ul>
 
-        <button
-          onclick={beginWipe}
-          disabled={!ready || wiping}
-          class="mt-4 w-full rounded-lg bg-red-500 px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-red-400 disabled:cursor-not-allowed disabled:bg-zinc-700 disabled:text-zinc-400"
-        >
-          {wiping ? 'Wiping…' : 'Begin wipe (simulated)'}
-        </button>
+        {#if !rehearsal}
+          <button
+            onclick={startRehearsal}
+            disabled={!ready}
+            class="mt-4 w-full rounded-lg bg-red-500 px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-red-400 disabled:cursor-not-allowed disabled:bg-zinc-700 disabled:text-zinc-400"
+          >
+            Enter nuke rehearsal (simulated)
+          </button>
+        {:else}
+          <!-- ============ NUKE REHEARSAL ============ -->
+          <div class="mt-4 overflow-hidden rounded-xl border-2 border-amber-400/70">
+            <div class="bg-amber-400 px-4 py-2.5 text-center">
+              <p class="text-sm font-black tracking-widest text-zinc-950">
+                ⚠ SIMULATION — REHEARSAL ONLY ⚠
+              </p>
+              <p class="text-xs font-semibold text-zinc-800">
+                No disk is being wiped. Every value on this screen is a fixture.
+              </p>
+            </div>
 
-        {#if wiping}
-          <ul class="mt-3 space-y-1.5">
-            {#each [0, 1, 2] as i}
-              {@const done = i < wipePassesDone}
-              {@const active = i === wipePassesDone && !wipeDone(wipePassesDone)}
-              <li class="rounded-lg bg-zinc-950/60 px-3.5 py-2.5 text-sm {active ? 'text-amber-300' : done ? 'text-emerald-300' : 'text-zinc-600'}">
-                {done ? '✓' : active ? '◌' : '○'} {['Pass 1 — zero fill', 'Pass 2 — random fill', 'Pass 3 — verify'][i]}
-              </li>
-            {/each}
-          </ul>
-          {#if wipeDone(wipePassesDone)}
-            <p class="mt-3 rounded-lg border border-emerald-500/30 bg-emerald-500/[0.07] px-4 py-3 text-sm text-emerald-200">
-              ✓ Wipe simulated complete — 3 passes, verified. Fixture only; no hardware touched.
-            </p>
-          {/if}
+            <div class="bg-zinc-950/80 px-4 py-4">
+              <p class="mb-1.5 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                Rehearsal target — fixture enumeration
+              </p>
+              <div class="rounded-lg border border-red-500/40 bg-red-500/[0.05] px-3.5 py-2.5 text-sm">
+                <span class="font-semibold text-zinc-200">{rehearsal.disk.label}</span>
+                <span class="text-zinc-500"> · {rehearsal.disk.model} · {rehearsal.disk.serial} · {formatSize(rehearsal.disk.sizeGb)}</span>
+                <span class="ml-2 rounded bg-amber-400/20 px-1.5 py-0.5 text-[10px] font-black tracking-wider text-amber-300">SIMULATED</span>
+              </div>
+
+              <p class="mb-1.5 mt-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                Wipe plan — step-through dry run ({rehearsal.stepIndex}/{rehearsal.plan.length} done)
+              </p>
+              <ol class="space-y-1.5">
+                {#each rehearsal.plan as step, i}
+                  {@const done = i < rehearsal.stepIndex}
+                  {@const current = i === rehearsal.stepIndex && !rehearsal.finished}
+                  <li class="rounded-lg px-3.5 py-2.5 text-sm {done ? 'bg-zinc-900/60 text-emerald-300' : current ? 'border border-amber-400/50 bg-amber-400/[0.06] text-amber-200' : 'bg-zinc-950/60 text-zinc-600'}">
+                    <span class="flex items-start justify-between gap-2">
+                      <span>
+                        {done ? '✓' : current ? '▶' : '○'}
+                        <span class="font-semibold">{i + 1}. {step.label}</span>
+                        <span class="block pl-5 text-xs opacity-80">{step.detail}</span>
+                      </span>
+                      <span class="shrink-0 rounded bg-amber-400/20 px-1.5 py-0.5 text-[10px] font-black tracking-wider text-amber-300">SIMULATED</span>
+                    </span>
+                  </li>
+                {/each}
+              </ol>
+
+              {#if !rehearsal.finished}
+                <div class="mt-4 flex flex-col gap-2 sm:flex-row">
+                  <button
+                    onclick={advanceRehearsalStep}
+                    class="flex-1 rounded-lg bg-amber-400 px-5 py-2.5 text-sm font-bold text-zinc-950 transition-colors hover:bg-amber-300"
+                  >
+                    {rehearsal.stepIndex === 0 ? 'Run first step' : rehearsal.stepIndex === rehearsal.plan.length - 1 ? 'Run final step' : 'Run next step'}
+                  </button>
+                  <button
+                    onclick={abortRehearsal}
+                    class="rounded-lg border border-zinc-700 px-5 py-2.5 text-sm font-bold text-zinc-300 transition-colors hover:border-zinc-500 hover:text-white"
+                  >
+                    Abort rehearsal
+                  </button>
+                </div>
+                <p class="mt-2 text-xs text-zinc-600">Aborting returns to the boot menu — rehearsal state is discarded.</p>
+              {:else}
+                <p class="mt-4 rounded-lg border border-emerald-500/30 bg-emerald-500/[0.07] px-4 py-3 text-sm text-emerald-200">
+                  ✓ Rehearsal complete — {rehearsal.plan.length} steps simulated. No hardware was touched.
+                </p>
+                <div class="mt-3">
+                  <div class="flex flex-wrap items-center justify-between gap-2">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-zinc-500">Rehearsal transcript (fixture only)</p>
+                    <button
+                      onclick={copyTranscript}
+                      class="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-bold text-zinc-300 transition-colors hover:border-zinc-500 hover:text-white"
+                    >
+                      {copiedFlag ? '✓ Copied' : 'Copy transcript'}
+                    </button>
+                  </div>
+                  <pre class="mt-1.5 max-h-64 overflow-auto rounded-lg border border-zinc-800 bg-zinc-950 px-4 py-3 font-mono text-xs leading-relaxed text-zinc-400">{rehearsal.transcript}</pre>
+                </div>
+                <div class="mt-4 flex flex-col gap-2 sm:flex-row">
+                  <button
+                    onclick={() => { rehearsal = null; }}
+                    class="flex-1 rounded-lg border border-zinc-700 px-5 py-2.5 text-sm font-bold text-zinc-300 transition-colors hover:border-zinc-500 hover:text-white"
+                  >
+                    Rehearse again
+                  </button>
+                  <button
+                    onclick={goBack}
+                    class="flex-1 rounded-lg bg-zinc-700 px-5 py-2.5 text-sm font-bold text-zinc-100 transition-colors hover:bg-zinc-600"
+                  >
+                    Back to boot menu
+                  </button>
+                </div>
+              {/if}
+            </div>
+          </div>
         {/if}
       {/if}
 
