@@ -8,7 +8,10 @@ does DOGS actually build?", this repo's answer is the site it deploys.
 > output) with landing, `/work` index, `/work/<slug>` case studies, `/demos`
 > playground, `/about`, and a 404 page. Staging deploys to
 > `https://yeahdogs.github.io/demo/` from the `gh-pages` branch. See
-> [`docs/decisions.md`](./docs/decisions.md) for the stack/deploy calls.
+> [`docs/decisions.md`](./docs/decisions.md) for the stack/deploy calls. The
+`/demos` playground has its first live piece: a Wax drop-alert simulator
+(client-side mock of the Wax scan loop — watchlist input, scan button, alert
+feed).
 
 ## Run it
 
