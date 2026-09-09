@@ -9,7 +9,7 @@ repo="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
 fail=0
 checked=0
 
-for md in $(find "$repo" -path "$repo/.git" -prune -o -name '*.md' -print | sort); do
+for md in $(find "$repo" \( -path "$repo/.git" -o -path "$repo/node_modules" \) -prune -o -name '*.md' -print | sort); do
   dir="$(dirname -- "$md")"
   # Pull out link targets: ](target) — grep -o finds all of them per line
   targets=$(grep -o ']([^)]*)' "$md" | sed -e 's/^](//' -e 's/)$//' || true)
@@ -39,7 +39,7 @@ fi
 for md in "$repo"/docs/*.md; do
   name="$(basename -- "$md")"
   found=0
-  for other in $(find "$repo" -path "$repo/.git" -prune -o -name '*.md' -print | grep -v "^$md\$"); do
+  for other in $(find "$repo" \( -path "$repo/.git" -o -path "$repo/node_modules" \) -prune -o -name '*.md' -print | grep -v "^$md\$"); do
     if grep -qF "docs/$name" "$other" || grep -qF "($name)" "$other" || grep -qF "](./$name)" "$other"; then
       found=1
       break
