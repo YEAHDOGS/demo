@@ -11,7 +11,10 @@ does DOGS actually build?", this repo's answer is the site it deploys.
 > [`docs/decisions.md`](./docs/decisions.md) for the stack/deploy calls. The
 `/demos` playground has its first live piece: a Wax drop-alert simulator
 (client-side mock of the Wax scan loop — watchlist input, scan button, alert
-feed).
+feed). The second piece is a Phoenix boot-menu simulator: a client-side mock
+of the Phoenix boot menu (Analyze / Backup / Nuke / Reinstall) with the Nuke
+safety interlock visible — explicit disk pick plus typed confirmation before
+a simulated three-pass wipe arms.
 
 ## Run it
 
