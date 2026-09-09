@@ -88,11 +88,38 @@ describe('nuke safety interlock', () => {
   });
 
   it('nukeGates reports per-gate pass/fail', () => {
-    expect(nukeGates(null, '').map((g) => g.pass)).toEqual([false, false]);
-    expect(nukeGates('disk-0', 'nope').map((g) => g.pass)).toEqual([true, false]);
+    expect(nukeGates(null, '').map((g) => g.pass)).toEqual([false, false, false]);
+    expect(nukeGates('disk-0', 'nope').map((g) => g.pass)).toEqual([
+      true,
+      false,
+      true,
+    ]);
     expect(
       nukeGates('disk-0', 'NUKE SN-0001-FIXTURE').map((g) => g.pass),
-    ).toEqual([true, true]);
+    ).toEqual([true, true, true]);
+  });
+
+  it('vault gate: the backup vault can never be a nuke target', () => {
+    const disk = diskById('disk-1');
+    expect(disk.vault).toBe(true);
+    // Even the correct typed phrase can't arm the vault disk.
+    expect(nukeGates('disk-1', confirmationPhrase(disk)).map((g) => g.pass)).toEqual([
+      true,
+      true,
+      false,
+    ]);
+    expect(nukeReady('disk-1', confirmationPhrase(disk))).toBe(false);
+    // Non-vault disks still arm.
+    expect(nukeReady('disk-0', confirmationPhrase(diskById('disk-0')))).toBe(true);
+    expect(nukeReady('disk-2', confirmationPhrase(diskById('disk-2')))).toBe(true);
+  });
+
+  it('only the fixture backup vault carries the vault flag', () => {
+    const vaults = fixtureDiskAdapter
+      .enumerate()
+      .filter((d) => d.vault)
+      .map((d) => d.id);
+    expect(vaults).toEqual(['disk-1']);
   });
 });
 

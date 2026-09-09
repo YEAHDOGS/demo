@@ -243,10 +243,17 @@
         <p class="mb-1.5 mt-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">
           Gate 1 — pick a disk (nothing preselected)
         </p>
+        <p class="mb-1.5 text-xs text-amber-300/80">
+          The backup vault can never be a Nuke target — nuking it would destroy
+          the data a restore would need.
+        </p>
         {#each DISKS as disk}
           <label class="mb-1.5 flex cursor-pointer items-center gap-2.5 rounded-lg border px-3 py-2 text-sm {nukeDisk === disk.id ? 'border-red-500/60 bg-red-500/[0.06]' : 'border-zinc-800 bg-zinc-950/60'}">
             <input type="radio" name="nuke-disk" checked={nukeDisk === disk.id} onchange={() => (nukeDisk = disk.id)} class="accent-red-500" />
             <span class="text-zinc-200">{disk.label} <span class="text-zinc-500">· {formatSize(disk.sizeGb)} · {disk.serial}</span></span>
+            {#if disk.vault}
+              <span class="ml-auto shrink-0 rounded bg-amber-400/20 px-1.5 py-0.5 text-[10px] font-black tracking-wider text-amber-300">VAULT</span>
+            {/if}
           </label>
         {/each}
 

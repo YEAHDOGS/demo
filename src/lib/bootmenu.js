@@ -6,9 +6,11 @@
  *
  * Safety model mirrors Phoenix's design direction: the Nuke path is a
  * three-gate interlock (explicit disk enumeration → typed confirmation →
- * final review), so wiping the wrong disk is structurally hard. All disks
- * and confirmations here are inert fixtures — nothing on this page can
- * touch real hardware.
+ * final review), so wiping the wrong disk is structurally hard. The final
+ * review also refuses vault disks: a disk flagged as a backup target can
+ * never be a Nuke target, because nuking the vault destroys the data you
+ * would restore from. All disks and confirmations here are inert fixtures
+ * — nothing on this page can touch real hardware.
  */
 
 export const MENU_ITEMS = [
@@ -58,6 +60,8 @@ export const DISKS = [
     kind: 'USB-HDD',
     serial: 'SN-0002-FIXTURE',
     health: 'ok',
+    // Backup target — can never be a Nuke target (see nukeGates gate 3).
+    vault: true,
   },
   {
     id: 'disk-2',
@@ -107,7 +111,8 @@ export function confirmationPhrase(disk) {
 
 /**
  * Gate 3: the full Nuke launch checklist. Every gate must pass before the
- * simulated wipe begins.
+ * simulated wipe begins. The vault gate refuses backup-target disks: nuking
+ * the vault would destroy the very data a restore would need.
  * @param {string | null} selectedId
  * @param {string} typed
  */
@@ -119,6 +124,11 @@ export function nukeGates(selectedId, typed) {
       id: 'confirm',
       label: `Typed "${confirmationPhrase(disk ?? { serial: '…' })}"`,
       pass: disk !== null && isConfirmationAccepted(disk, typed),
+    },
+    {
+      id: 'vault',
+      label: 'Target is not a backup vault',
+      pass: disk !== null && !disk.vault,
     },
   ];
 }
