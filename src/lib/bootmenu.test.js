@@ -1,11 +1,18 @@
 import { describe, expect, it } from 'vitest';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
+import { readFileSync } from 'node:fs';
 import {
   DISKS,
   MENU_ITEMS,
+  PARTITIONS,
   REINSTALL_FIELDS,
   WIPE_PASSES,
+  buildRehearsalTranscript,
+  buildWipePlan,
   confirmationPhrase,
   diskById,
+  fixtureDiskAdapter,
   formatSize,
   isConfirmationAccepted,
   isDiskSelected,
@@ -13,6 +20,7 @@ import {
   nextWipePass,
   nukeGates,
   nukeReady,
+  rehearsalAbortState,
   reinstallReady,
   wipeDone,
 } from './bootmenu.js';
@@ -117,5 +125,142 @@ describe('formatting', () => {
   it('formats sizes with TB for terabyte-scale', () => {
     expect(formatSize(10240)).toBe('10 TB');
     expect(formatSize(512)).toBe('512 GB');
+  });
+});
+
+describe('nuke rehearsal model', () => {
+  it('PARTITIONS covers every fixture disk with sane entries', () => {
+    for (const disk of DISKS) {
+      const parts = PARTITIONS[disk.id];
+      expect(parts.length).toBeGreaterThan(0);
+      for (const p of parts) {
+        expect(p.label).toBeTruthy();
+        expect(p.fs).toBeTruthy();
+        expect(p.sizeGb).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('buildWipePlan orders enumerate → detach → passes → verify', () => {
+    const plan = buildWipePlan('disk-0');
+    expect(plan[0].id).toBe('enumerate');
+    expect(plan[plan.length - 1].id).toBe('verify');
+    const ids = plan.map((s) => s.id);
+    expect(ids).toContain('wipe-pass-1');
+    expect(ids).toContain('wipe-pass-2');
+    expect(ids).toContain('wipe-pass-3');
+    expect(ids.filter((id) => id.startsWith('detach-')).length).toBe(
+      PARTITIONS['disk-0'].length,
+    );
+    // Every step is explicitly tagged simulated — no exceptions.
+    expect(plan.every((s) => s.simulated === true)).toBe(true);
+  });
+
+  it('buildWipePlan returns [] for an unknown disk', () => {
+    expect(buildWipePlan('bogus')).toEqual([]);
+  });
+
+  it('buildRehearsalTranscript is plain text, fixture-only, SIMULATION-headed', () => {
+    const disk = diskById('disk-0');
+    const plan = buildWipePlan('disk-0');
+    const transcript = buildRehearsalTranscript({
+      disk,
+      plan,
+      isoDate: '2026-09-09T10:00:00.000Z',
+    });
+    expect(transcript).toContain('*** SIMULATION');
+    expect(transcript).toContain(disk.serial);
+    expect(transcript).toContain('No disk was touched');
+    expect(transcript).toContain('no real disk data');
+    for (const step of plan) {
+      expect(transcript).toContain(`[SIMULATED] ${step.label}`);
+    }
+    expect(typeof transcript).toBe('string');
+  });
+
+  it('rehearsalAbortState resets to a clean, aborted state', () => {
+    const state = rehearsalAbortState();
+    expect(state).toEqual({
+      stepIndex: 0,
+      finished: false,
+      aborted: true,
+      transcript: '',
+    });
+  });
+});
+
+describe('fixture disk adapter', () => {
+  it('identifies itself as fixture-only', () => {
+    expect(fixtureDiskAdapter.kind).toBe('fixture');
+  });
+
+  it('enumerate returns the fixture inventory as defensive copies', () => {
+    const disks = fixtureDiskAdapter.enumerate();
+    expect(disks.map((d) => d.id)).toEqual(DISKS.map((d) => d.id));
+    disks[0].label = 'MUTATED';
+    expect(diskById('disk-0').label).toBe('NVMe SSD');
+    expect(fixtureDiskAdapter.enumerate()[0].label).toBe('NVMe SSD');
+  });
+
+  it('partitions returns copies, empty array for unknown disks', () => {
+    const parts = fixtureDiskAdapter.partitions('disk-0');
+    expect(parts.length).toBe(PARTITIONS['disk-0'].length);
+    parts[0].label = 'MUTATED';
+    expect(fixtureDiskAdapter.partitions('disk-0')[0].label).toBe(
+      PARTITIONS['disk-0'][0].label,
+    );
+    expect(fixtureDiskAdapter.partitions('bogus')).toEqual([]);
+  });
+
+  it('all fixture serials are marked FIXTURE — never real hardware ids', () => {
+    expect(
+      fixtureDiskAdapter.enumerate().every((d) => d.serial.includes('FIXTURE')),
+    ).toBe(true);
+  });
+});
+
+describe('simulator isolation — no code path can touch real disks', () => {
+  const here = dirname(fileURLToPath(import.meta.url));
+  const sources = {
+    'src/lib/bootmenu.js': readFileSync(join(here, 'bootmenu.js'), 'utf8'),
+    'src/components/BootMenuSimulator.svelte': readFileSync(
+      join(here, '..', 'components', 'BootMenuSimulator.svelte'),
+      'utf8',
+    ),
+  };
+
+  // Patterns that would indicate real device/filesystem/process access.
+  const banned = [
+    /require\s*\(\s*['"]fs['"]\s*\)/,
+    /from\s+['"]fs['"]/,
+    /child_process/,
+    /execSync|spawnSync|\bexec\s*\(/,
+    /\bprocess\.(env|argv|exit|execPath)\b/,
+    /\/dev\//,
+    /\\\\\.\\/, // Windows device-namespace prefix \\.\
+    /\bwmic\b/i,
+    /\bdiskpart\b/i,
+    /\bmkfs\b/,
+    /\bdd\s+if=/,
+    /ioctl/,
+  ];
+
+  for (const [path, src] of Object.entries(sources)) {
+    it(`${path} contains no real-disk access patterns`, () => {
+      for (const pattern of banned) {
+        expect(
+          pattern.test(src),
+          `${path} matches banned pattern ${pattern}`,
+        ).toBe(false);
+      }
+    });
+  }
+
+  it('every disk reference in the UI flows through the fixture adapter or DISKS fixture', () => {
+    const svelte = sources['src/components/BootMenuSimulator.svelte'];
+    // Disk lists render from DISKS / fixtureDiskAdapter only.
+    expect(svelte).toContain('DISKS');
+    expect(svelte).not.toContain('navigator.usb');
+    expect(svelte).not.toContain('localStorage');
   });
 });
