@@ -1,14 +1,14 @@
 {
-  "name": "DOGS - Modern Svelte Template",
+  "name": "DOGS — What We Build",
   "short_name": "DOGS",
   "icons": [
     {
-      "src": "/favicon.svg",
+      "src": "favicon.svg",
       "sizes": "any",
       "type": "image/svg+xml"
     }
   ],
-  "theme_color": "#000000",
-  "background_color": "#000000",
+  "theme_color": "#0a0a0c",
+  "background_color": "#0a0a0c",
   "display": "standalone"
 }
