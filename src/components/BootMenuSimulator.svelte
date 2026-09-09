@@ -19,7 +19,7 @@
   // Nuke interlock state.
   let nukeDisk = $state(null);
   let nukeTyped = $state('');
-  // Nuke rehearsal state: null | { disk, plan, stepIndex, finished, transcript }.
+  // Nuke rehearsal state: null | { disk, plan, gates, stepIndex, finished, transcript }.
   let rehearsal = $state(null);
   let copiedFlag = $state(false);
   // Backup state.
@@ -60,6 +60,9 @@
     rehearsal = {
       disk,
       plan: buildWipePlan(disk.id),
+      // Snapshot the arming gates at launch: the transcript records the
+      // exact interlock state that authorized this rehearsal.
+      gates: nukeGates(nukeDisk, nukeTyped),
       stepIndex: 0,
       finished: false,
       transcript: '',
@@ -78,6 +81,7 @@
         transcript: buildRehearsalTranscript({
           disk: rehearsal.disk,
           plan: rehearsal.plan,
+          gates: rehearsal.gates,
         }),
       };
     } else {
