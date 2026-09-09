@@ -33,4 +33,25 @@ if [ "$fail" -eq 0 ]; then
 else
   echo "FAIL: broken links found"
 fi
+
+# Coverage: every docs/*.md must be reachable from at least one other
+# markdown file, so no doc quietly rots as an orphan.
+for md in "$repo"/docs/*.md; do
+  name="$(basename -- "$md")"
+  found=0
+  for other in $(find "$repo" -path "$repo/.git" -prune -o -name '*.md' -print | grep -v "^$md\$"); do
+    if grep -qF "docs/$name" "$other" || grep -qF "($name)" "$other" || grep -qF "](./$name)" "$other"; then
+      found=1
+      break
+    fi
+  done
+  if [ "$found" -eq 0 ]; then
+    echo "ORPHAN: docs/$name is not linked from any other markdown file"
+    fail=1
+  fi
+done
+
+if [ "$fail" -eq 0 ]; then
+  echo "OK: no orphaned docs"
+fi
 exit "$fail"
