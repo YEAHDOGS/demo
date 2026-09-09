@@ -14,7 +14,11 @@ does DOGS actually build?", this repo's answer is the site it deploys.
 feed). The second piece is a Phoenix boot-menu simulator: a client-side mock
 of the Phoenix boot menu (Analyze / Backup / Nuke / Reinstall) with the Nuke
 safety interlock visible — explicit disk pick plus typed confirmation before
-a simulated three-pass wipe arms.
+entering the Nuke rehearsal: a SIMULATION-bannered step-through dry-run of the
+wipe plan (fixture disk enumeration, per-partition steps, three wipe passes)
+with a copyable plain-text transcript and an abort-at-any-step path. Every
+disk op routes through the fixture disk adapter — nothing on this page can
+touch real hardware.
 
 ## Run it
 
