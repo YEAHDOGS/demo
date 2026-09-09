@@ -4,10 +4,20 @@
   /** @type {{ project: import('../data/projects.json') extends (infer T)[] ? T : never }} */
   const { project } = $props();
 
-  const STATUS_LABEL = { live: 'Live', 'in-progress': 'In progress', archived: 'Archived' };
+  const STATUS_LABEL = {
+    live: 'Live',
+    'staging-live': 'Staging live',
+    'in-progress': 'In progress',
+    concept: 'Concept',
+    paused: 'Paused',
+    archived: 'Archived',
+  };
   const STATUS_CLASS = {
     live: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300',
+    'staging-live': 'border-sky-500/40 bg-sky-500/10 text-sky-300',
     'in-progress': 'border-amber-500/40 bg-amber-500/10 text-amber-300',
+    concept: 'border-violet-500/40 bg-violet-500/10 text-violet-300',
+    paused: 'border-orange-500/40 bg-orange-500/10 text-orange-300',
     archived: 'border-zinc-600/60 bg-zinc-700/20 text-zinc-400',
   };
 </script>
