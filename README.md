@@ -18,6 +18,7 @@ npm run dev     # local dev server
 npm test        # vitest unit tests (router + content data)
 ./tests/build.sh      # production build smoke test → shippable dist/
 ./tests/check-links.sh # docs link + orphan check
+./tests/viewport.sh   # 360px mobile regression gate (blank thumbs, fixed-width overflow)
 ```
 
 ## Purpose
