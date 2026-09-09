@@ -4,8 +4,21 @@
 Ecosystem ships gets showcased, demoed, and linked. If someone asks "so what
 does DOGS actually build?", this repo's answer is the site it deploys.
 
-> Status: **skeleton / planning phase.** No site scaffolding yet — the shape of
-> the thing is documented in [`docs/`](./docs) before any code lands.
+> Status: **Phase 1 skeleton shipped.** Svelte 5 + Vite SPA (hash-routed, static
+> output) with landing, `/work` index, `/work/<slug>` case studies, `/demos`
+> playground, `/about`, and a 404 page. Staging deploys to
+> `https://yeahdogs.github.io/demo/` from the `gh-pages` branch. See
+> [`docs/decisions.md`](./docs/decisions.md) for the stack/deploy calls.
+
+## Run it
+
+```sh
+npm ci          # fresh checkout (node_modules is git-ignored, not committed)
+npm run dev     # local dev server
+npm test        # vitest unit tests (router + content data)
+./tests/build.sh      # production build smoke test → shippable dist/
+./tests/check-links.sh # docs link + orphan check
+```
 
 ## Purpose
 
