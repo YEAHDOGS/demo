@@ -27,6 +27,32 @@ for f in dist/index.html dist/404.html; do
   fi
 done
 
+# Regression: the 404-template bug (2026-09-09) — public/ once held an
+# unprocessed 404.html template (./src/main.js, no /demo/ base) that Vite
+# copied verbatim into dist/. dist/404.html must ONLY ever come from the
+# postbuild copy of the built index.html. Guard both vectors:
+# 1. no 404.html template in public/ (Vite copies public/* into dist/)
+if [ -f public/404.html ]; then
+  echo "FAIL: public/404.html exists — unprocessed template would shadow the postbuild fallback in dist/"
+  fail=1
+fi
+# 2. dist/404.html must be the built copy: identical to dist/index.html,
+#    referencing /demo/ base assets, never the pre-build ./src/ entry.
+if [ -f dist/404.html ]; then
+  if ! cmp -s dist/index.html dist/404.html; then
+    echo "FAIL: dist/404.html differs from dist/index.html — fallback is not the built copy"
+    fail=1
+  fi
+  if grep -q '\./src/' dist/404.html; then
+    echo "FAIL: dist/404.html references ./src/ — unprocessed template shipped"
+    fail=1
+  fi
+  if ! grep -q '/demo/assets/' dist/404.html; then
+    echo "FAIL: dist/404.html does not reference /demo/ base assets"
+    fail=1
+  fi
+fi
+
 # Assets must be referenced under the /demo/ base path
 if ! grep -q '/demo/assets/' dist/index.html; then
   echo "FAIL: dist/index.html does not reference /demo/ base assets"
