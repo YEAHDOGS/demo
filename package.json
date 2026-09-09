@@ -1,1 +1,34 @@
-{"dependencies":{"@lucide/svelte":"^1.43.0"},"description":"DOGS company portfolio — what the ecosystem ships, showcased and demoed","devDependencies":{"@sveltejs/vite-plugin-svelte":"^7.3.0","@tailwindcss/vite":"^4.3.3","@testing-library/jest-dom":"^7.0.1","@testing-library/svelte":"^5.4.2","@vitejs/plugin-legacy":"^8.2.3","jsdom":"^30.0.1","sass-embedded":"^1.104.0","svelte":"^5.57.0","tailwindcss":"^4.3.3","vite":"^8.2.2","vitest":"^5.0.0"},"engines":{"node":">=24"},"name":"@yeahdogs/demo","private":true,"scripts":{"build":"vite build","dev":"vite","preview":"vite preview","test":"vitest run","test:watch":"vitest"},"type":"module","version":"0.1.0"}
+{
+  "dependencies": {
+    "@lucide/svelte": "^1.43.0"
+  },
+  "description": "DOGS company portfolio — what the ecosystem ships, showcased and demoed",
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^7.3.0",
+    "@tailwindcss/vite": "^4.3.3",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/svelte": "^5.4.2",
+    "@vitejs/plugin-legacy": "^8.2.3",
+    "jsdom": "^30.0.1",
+    "sass-embedded": "^1.104.0",
+    "svelte": "^5.57.0",
+    "tailwindcss": "^4.3.3",
+    "vite": "^8.2.2",
+    "vitest": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "name": "@yeahdogs/demo",
+  "private": true,
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "postbuild": "cp dist/index.html dist/404.html"
+  },
+  "type": "module",
+  "version": "0.1.0"
+}
