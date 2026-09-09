@@ -8,27 +8,15 @@ Phased so each phase leaves the repo in a shippable state.
 - [x] `docs/content-plan.md` — case-study format + initial project list
 - [x] `docs/design-direction.md` — visual principles
 - [x] `docs/decisions.md` — open decisions logged
-- [ ] Decide: rename repo (`demo` → `portfolio`?) or keep
-- [ ] Decide: framework — Next.js (`.gitignore` suggests it) vs SvelteKit (org stack)
-- [ ] Decide: deployment target (Cloudflare Pages, matching the ecosystem?)
+- [x] Decide: keep repo name `demo` (see decisions.md — name is the Pages URL)
+- [x] Decide: framework — Svelte 5 + Vite SPA, per org template (see decisions.md)
+- [x] Decide: deployment target — GitHub Pages project site for staging (see decisions.md)
 
 ## Phase 1 — Skeleton site
-- [x] Scaffold the chosen framework, deploy a placeholder to the target
-  (built on disk: Svelte 5 + Vite, base path `/demo/` for
-  `yeahdogs.github.io/demo/` — but **source was never committed**; the build
-  output survives only in the untracked `dist/` on this machine. Recovery
-  needed before anything else: locate the source (e.g. an uncommitted worktree
-  or a lost worker sandbox) or rebuild from the `@dogs/svelte-template` in
-  `~/workspace/svelte-template` using the content baked into `dist/`. Until
-  source is in git, this site cannot be maintained or redeployed by anyone else.)
-- [x] Landing page: hero + featured work grid (in the disk build: icecream,
-  phoenix, castle, wax, divorce, chains, bakery, remote, dashboard, news —
-  verify/rewrite from the real content once source is recovered)
-- [ ] `/work` index page with the full portfolio list (not yet — landing only)
-- [x] 404 + basic metadata/OG tags (present in the disk build; `dist/404.html`
-  was an unprocessed template copy referencing `./src/main.js` — fixed on disk
-  2026-09-09. `scripts/smoke-dist.sh` guards this artifact's deployability.)
-- [ ] Source committed to git, CI producing `dist/` instead of a hand-built copy
+- [ ] Scaffold the chosen framework, deploy a placeholder to the target
+- [ ] Landing page: hero + featured work grid (3–6 projects, real links)
+- [ ] `/work` index page with the full portfolio list
+- [ ] 404 + basic metadata/OG tags
 
 ## Phase 2 — Case studies
 - [ ] Case-study template (see `content-plan.md`) wired as a route
