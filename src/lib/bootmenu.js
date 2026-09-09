@@ -174,3 +174,117 @@ export function formatSize(gb) {
   if (gb >= 1024) return `${(gb / 1024).toFixed(0)} TB`;
   return `${gb} GB`;
 }
+
+/**
+ * Fixture partition inventory per disk. Invented labels/sizes — never real
+ * disk data, never the machine's. Used by the Nuke rehearsal dry-run.
+ */
+export const PARTITIONS = {
+  'disk-0': [
+    { id: 'part-0-1', label: 'EFI System Partition', fs: 'FAT32', sizeGb: 0.5 },
+    { id: 'part-0-2', label: 'OS volume', fs: 'NTFS', sizeGb: 900 },
+    { id: 'part-0-3', label: 'Recovery volume', fs: 'NTFS', sizeGb: 2 },
+  ],
+  'disk-1': [
+    { id: 'part-1-1', label: 'Vault partition', fs: 'exFAT', sizeGb: 10240 },
+  ],
+  'disk-2': [
+    { id: 'part-2-1', label: 'Spare volume', fs: 'ext4', sizeGb: 400 },
+    { id: 'part-2-2', label: 'Scratch volume', fs: 'ext4', sizeGb: 112 },
+  ],
+};
+
+/**
+ * The fixture disk adapter — the ONLY disk-access surface the simulator is
+ * allowed to use. It knows nothing about real hardware: no filesystem, no
+ * subprocesses, no device nodes. Every simulator code path reads disks
+ * through this adapter; the regression tests pin that contract.
+ */
+export const fixtureDiskAdapter = {
+  kind: 'fixture',
+  version: 1,
+  /** @returns {typeof DISKS} defensive copies of the fixture inventory */
+  enumerate() {
+    return DISKS.map((d) => ({ ...d }));
+  },
+  /**
+   * @param {string} diskId
+   * @returns {(typeof PARTITIONS)['disk-0']} defensive copies of fixture partitions
+   */
+  partitions(diskId) {
+    return (PARTITIONS[diskId] ?? []).map((p) => ({ ...p }));
+  },
+};
+
+/**
+ * Build the ordered dry-run plan for a Nuke rehearsal on a fixture disk:
+ * partition enumeration, per-partition detachment notes, the three wipe
+ * passes, then final verification. Every step is tagged simulated.
+ * @param {string} diskId
+ * @returns {{ id: string, label: string, detail: string, simulated: true }[]}
+ */
+export function buildWipePlan(diskId) {
+  const disk = diskById(diskId);
+  if (!disk) return [];
+  const parts = fixtureDiskAdapter.partitions(diskId);
+  const plan = [
+    {
+      id: 'enumerate',
+      label: 'Enumerate partitions',
+      detail: `SIMULATED — ${parts.length} fixture partition(s) listed for ${disk.label} (${disk.serial}); no hardware queried`,
+      simulated: true,
+    },
+    ...parts.map((p) => ({
+      id: `detach-${p.id}`,
+      label: `Detach partition: ${p.label}`,
+      detail: `SIMULATED — ${p.fs} · ${formatSize(p.sizeGb)}; no volume unmounted`,
+      simulated: true,
+    })),
+    ...WIPE_PASSES.map((pass) => ({
+      id: `wipe-${pass.id}`,
+      label: pass.label,
+      detail: `SIMULATED — ${pass.detail}; no sectors written`,
+      simulated: true,
+    })),
+    {
+      id: 'verify',
+      label: 'Final verification',
+      detail: 'SIMULATED — read-back check against fixture data only',
+      simulated: true,
+    },
+  ];
+  return plan;
+}
+
+/**
+ * Plain-text rehearsal transcript — copy/paste friendly, fixture-only, and
+ * headed by an unmistakable SIMULATION banner so it can never be mistaken
+ * for a record of a real wipe.
+ * @param {{ disk: (typeof DISKS)[number], plan: ReturnType<typeof buildWipePlan>, isoDate?: string }}
+ */
+export function buildRehearsalTranscript({ disk, plan, isoDate }) {
+  const lines = [
+    '*** SIMULATION — PHOENIX NUKE REHEARSAL TRANSCRIPT ***',
+    'Dry run only. No disk was touched. Every value below is a fixture;',
+    'no real disk data appears in this transcript.',
+    `Rehearsed at: ${isoDate ?? new Date().toISOString()}`,
+    `Target (fixture): ${disk.label} · ${disk.model} · ${disk.serial} · ${formatSize(disk.sizeGb)}`,
+    '',
+    'Rehearsal steps:',
+    ...plan.map(
+      (s, i) => `  ${i + 1}. [SIMULATED] ${s.label} — ${s.detail}`,
+    ),
+    '',
+    'Result: rehearsal complete. No hardware was accessed.',
+  ];
+  return lines.join('\n');
+}
+
+/**
+ * Abort a rehearsal at any step: returns the pristine reset state the
+ * simulator shows after an abort (all interlock inputs cleared), so the
+ * abort path can be reasoned about and tested without UI.
+ */
+export function rehearsalAbortState() {
+  return { stepIndex: 0, finished: false, aborted: true, transcript: '' };
+}
