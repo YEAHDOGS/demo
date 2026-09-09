@@ -53,6 +53,20 @@ if [ -f dist/404.html ]; then
   fi
 fi
 
+# Webmanifest must use relative asset paths under the /demo/ base. The manifest is
+# served at /demo/site.webmanifest, so an absolute "/favicon.svg" resolves to the
+# site root and 404s on GitHub Pages. Relative paths resolve under /demo/.
+if [ -f public/site.webmanifest ]; then
+  if grep -q '"src": "/' public/site.webmanifest; then
+    echo "FAIL: public/site.webmanifest has absolute-root asset paths — they 404 under /demo/ on Pages"
+    fail=1
+  fi
+  if ! grep -q '"name": "DOGS' public/site.webmanifest; then
+    echo "FAIL: public/site.webmanifest name does not identify the demo site"
+    fail=1
+  fi
+fi
+
 # Assets must be referenced under the /demo/ base path
 if ! grep -q '/demo/assets/' dist/index.html; then
   echo "FAIL: dist/index.html does not reference /demo/ base assets"
