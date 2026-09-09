@@ -14,6 +14,8 @@
 
 # production
 /build
+# vite (svelte) build output — this repo's actual stack, not next.js
+/dist
 
 # misc
 .DS_Store
