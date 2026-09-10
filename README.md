@@ -29,6 +29,8 @@ npm test        # vitest unit tests (router + content data)
 ./tests/build.sh      # production build smoke test → shippable dist/
 ./tests/check-links.sh # docs link + orphan check
 ./tests/viewport.sh   # 360px mobile regression gate (blank thumbs, fixed-width overflow)
+./tests/header-fit.sh # sticky header fit at phone widths (fontTools-measured)
+./tests/simulator-fit.sh # boot-menu/drop simulator rows fit 360px (fontTools-measured, per-surface budgets)
 ```
 
 ## Purpose
