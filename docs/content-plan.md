@@ -24,7 +24,7 @@ These are the obvious first entries — confirm/expand with Brandon before writi
 - **Phoenix** — Windows answer-file builder / debloat tooling
 - **Git for save data** — version control for retro game saves
 - **Retro arcade** — the arcade component currently being built
-- **Captain Brando music site** — shows the creative side
+- **DOGS music site** — shows the creative side
 
 Rule of thumb: lead with what's *live*. Dead skeletons don't get case studies —
 they get a line in the full index at most.
