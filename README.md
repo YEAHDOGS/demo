@@ -9,7 +9,7 @@ does DOGS actually build?", this repo's answer is the site it deploys.
 
 ## Purpose
 
-`demo` exists to solve one problem: user ships fast (20+ skeletons and
+`demo` exists to solve one problem: ships fast (20+ skeletons and
 counting) but has no single page that ties the work together. This repo will
 become a portfolio site that:
 

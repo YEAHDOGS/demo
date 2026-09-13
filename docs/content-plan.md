@@ -16,7 +16,7 @@ Keep each section tight. The whole page should read in under 2 minutes.
 
 ## Candidate projects (from across the org)
 
-These are the obvious first entries — confirm/expand with user before writing:
+These are the obvious first entries — confirm/expand with the founder before writing:
 
 - **Ice Cream Market Monitor** (`icecream.wearedogs.net`) — flagship; Svelte, live data
 - **DOGS core platform** — the ecosystem's spine

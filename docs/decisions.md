@@ -5,14 +5,14 @@ Open questions logged here so they don't get decided by accident.
 ## 1. Repo name: `demo` → ?
 `demo` is generic and this repo is specifically the company portfolio. Options:
 (a) rename to `portfolio`, (b) keep `demo` as the demos-playground home with the
-portfolio living under it. Needs user's call — renaming a fresh repo is
+portfolio living under it. Needs the founder's call — renaming a fresh repo is
 cheap, renaming after links spread is not.
 
 ## 2. Framework: Next.js or SvelteKit?
 - `.gitignore` in this repo is Next.js-flavored (`.next/`, `next-env.d.ts`)
 - The org's actual stack is Svelte 5 + Vite + Tailwind (Cloudflare Pages/R2)
 - Recommendation: SvelteKit, for ecosystem consistency — unless there's a
-  specific Next.js reason. Needs user's call.
+  specific Next.js reason. Needs the founder's call.
 
 ## 3. Deployment target
 Ecosystem default is Cloudflare Pages (with GitHub Pages in the mix). The
